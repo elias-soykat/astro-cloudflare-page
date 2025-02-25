@@ -1,0 +1,25 @@
+{
+  "name": "@monorepo/shared",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {},
+  "exports": {
+    "./themes/starter/components/*": "./themes/starter/components/*",
+    "./themes/starter/layouts/*": "./themes/starter/layouts/*",
+    "./themes/starter/pages/*": "./themes/starter/pages/*",
+    "./themes/starter/styles": "./themes/starter/styles/global.css",
+    "./themes/starter/types/*": "./themes/starter/types/*.ts",
+    "./utils/variants/*": "./utils/variants/*.ts",
+    "./utils/*": "./utils/*",
+    "./config/astro": "./config/astro.base.config.mjs",
+    "./config/typescript": "./config/tsconfig.base.json"
+  },
+  "dependencies": {
+    "@tailwindcss/typography": "^0.5.0",
+    "@tailwindcss/vite": "^4.0.0",
+    "astro": "^5.0.0",
+    "tailwindcss": "^4.0.0",
+    "tailwindcss-animated": "^2.0.0"
+  }
+}

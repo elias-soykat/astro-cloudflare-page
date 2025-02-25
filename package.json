@@ -1,0 +1,25 @@
+{
+  "name": "monorepo",
+  "private": true,
+  "scripts": {
+    "dev:domain.com": "pnpm --filter @niche1/domain.com dev",
+    "build:domain.com": "pnpm --filter @niche1/domain.com build",
+    "preview:domain.com": "pnpm --filter @niche1/domain.com preview",
+    "dev:all": "pnpm -r dev",
+    "build:all": "pnpm -r build",
+    "preview:all": "pnpm -r preview"
+  },
+  "dependencies": {
+    "@tailwindcss/typography": "^0.5.16",
+    "@tailwindcss/vite": "^4.0.6",
+    "astro": "^5.2.5",
+    "astro-generic-build-filenames": "^0.3.0",
+    "tailwindcss": "^4.0.6",
+    "tailwindcss-animated": "^2.0.0"
+  },
+  "devDependencies": {
+    "prettier": "^3.5.0",
+    "prettier-plugin-astro": "^0.14.1",
+    "prettier-plugin-tailwindcss": "^0.6.11"
+  }
+}
