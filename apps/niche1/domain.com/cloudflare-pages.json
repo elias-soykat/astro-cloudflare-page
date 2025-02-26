@@ -1,0 +1,9 @@
+{
+  "build": {
+    "command": "cd ../../../ && pnpm install --no-frozen-lockfile && NODE_ENV=production OBFUSCATION_SALT=$(openssl rand -hex 16) pnpm --filter @niche1/domain.com build",
+    "output_directory": "dist",
+    "environment": {
+      "NODE_ENV": "production"
+    }
+  }
+} 

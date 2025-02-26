@@ -7,7 +7,9 @@
     "preview:domain.com": "pnpm --filter @niche1/domain.com preview",
     "dev:all": "pnpm -r dev",
     "build:all": "pnpm -r build",
-    "preview:all": "pnpm -r preview"
+    "preview:all": "pnpm -r preview",
+    "obfuscate:domain.com": "node packages/shared/scripts/obfuscate.js apps/niche1/domain.com",
+    "obfuscate:all": "pnpm -r exec -- node ../../packages/shared/scripts/obfuscate.js"
   },
   "dependencies": {
     "@tailwindcss/typography": "^0.5.16",

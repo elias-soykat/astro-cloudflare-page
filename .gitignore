@@ -33,3 +33,16 @@ pnpm-debug.log*
 
 # Astro
 .astro/
+
+# Dependencies
+node_modules
+.pnpm-store
+node_modules/
+**/node_modules/
+
+
+
+# Build output
+
+# Obfuscation
+# Remove the duplicate node_modules entry
