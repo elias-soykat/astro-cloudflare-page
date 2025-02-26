@@ -8,6 +8,8 @@ import {
   preprocessSourceFiles,
   getClassMap,
   ensureCommonTailwindClasses,
+  processCssFiles,
+  findAllHtmlFiles,
 } from "./obfuscationManager.js";
 
 /**
@@ -149,6 +151,81 @@ export function obfuscationIntegration() {
           }
         } catch (error) {
           console.error("❌ Error verifying obfuscation:", error);
+        }
+
+        // Make sure CSS is processed AFTER HTML to guarantee synchronization
+        processCssFiles(outputDir);
+
+        // Verify obfuscation by checking both HTML and CSS files
+        try {
+          console.log("🔍 Final verification of obfuscation...");
+
+          // Check HTML files
+          const htmlFiles = findAllHtmlFiles(outputDir);
+          console.log(
+            `📄 Found ${htmlFiles.length} HTML files for verification`,
+          );
+
+          // Check CSS files
+          const findAllCssFiles = (directory) => {
+            let cssFiles = [];
+            const entries = fs.readdirSync(directory, { withFileTypes: true });
+
+            for (const entry of entries) {
+              const fullPath = path.join(directory, entry.name);
+
+              if (entry.isDirectory()) {
+                cssFiles = cssFiles.concat(findAllCssFiles(fullPath));
+              } else if (entry.name.endsWith(".css")) {
+                cssFiles.push(fullPath);
+              }
+            }
+
+            return cssFiles;
+          };
+
+          const cssFiles = findAllCssFiles(outputDir);
+          console.log(`📄 Found ${cssFiles.length} CSS files for verification`);
+
+          if (cssFiles.length > 0 && htmlFiles.length > 0) {
+            // Sample check of the first HTML file and first CSS file
+            const htmlContent = fs.readFileSync(htmlFiles[0], "utf-8");
+            const cssContent = fs.readFileSync(cssFiles[0], "utf-8");
+
+            // Extract a sample of obfuscated class names from HTML
+            const htmlClassRegex = /class="([^"]*)"/g;
+            const htmlClasses = new Set();
+            let htmlMatch;
+            while ((htmlMatch = htmlClassRegex.exec(htmlContent)) !== null) {
+              const classes = htmlMatch[1].split(/\s+/);
+              classes.forEach((c) => {
+                // Only look at obfuscated classes (they start with 'o')
+                if (c.trim() && c.trim().startsWith("o")) {
+                  htmlClasses.add(c.trim());
+                }
+              });
+            }
+
+            // Check if any of these classes appear in the CSS
+            let matchCount = 0;
+            htmlClasses.forEach((htmlClass) => {
+              if (cssContent.includes(`.${htmlClass}`)) {
+                matchCount++;
+              }
+            });
+
+            if (matchCount > 0) {
+              console.log(
+                `✅ Verified obfuscation consistency: found ${matchCount} matching classes between HTML and CSS`,
+              );
+            } else {
+              console.warn(
+                "⚠️ Could not verify consistency - no matching classes found between HTML and CSS",
+              );
+            }
+          }
+        } catch (error) {
+          console.error("❌ Error during final verification:", error);
         }
 
         console.log("🔒 Obfuscation process completed!");

@@ -44,18 +44,40 @@ const postcssObfuscator = (opts = {}) => {
 
       const originalSelector = rule.selector;
 
-      // Process Tailwind utilities - more comprehensive regex
+      // More comprehensive replacement for all types of CSS selectors
+      // 1. Handle standard selectors
       rule.selector = rule.selector.replace(
-        /\.([a-zA-Z0-9_-]+(?:\:[a-zA-Z0-9_-]+)*)/g,
+        /\.([a-zA-Z0-9_-]+)(?!\w*[{}])/g,
         (match, className) => {
           processedClasses.add(className);
           const obfuscated = getObfuscatedClassName(className);
-          return obfuscated ? `.${obfuscated}` : match;
+          if (obfuscated) {
+            if (opts.debug) console.log(`🔄 ${className} → ${obfuscated}`);
+            return `.${obfuscated}`;
+          }
+          return match;
+        },
+      );
+
+      // 2. Handle Tailwind variant selectors like hover:, focus:, etc.
+      rule.selector = rule.selector.replace(
+        /\.([\w-]+)\\:([\w-]+)/g,
+        (match, variant, className) => {
+          const fullClass = `${variant}:${className}`;
+          processedClasses.add(fullClass);
+          const obfuscated = getObfuscatedClassName(fullClass);
+          if (obfuscated) {
+            if (opts.debug) console.log(`🔄 ${fullClass} → ${obfuscated}`);
+            return `.${obfuscated}`;
+          }
+          return match;
         },
       );
 
       if (originalSelector !== rule.selector && opts.debug) {
-        console.log(`🔄 Transformed: ${originalSelector} → ${rule.selector}`);
+        console.log(
+          `🔄 Full selector transform: ${originalSelector} → ${rule.selector}`,
+        );
       }
     },
 

@@ -216,19 +216,50 @@ export function ensureCommonTailwindClasses() {
   const commonClasses = [
     // Layout
     'container', 'flex', 'grid', 'block', 'inline', 'inline-block', 'hidden',
-    // Spacing
-    'p-1', 'p-2', 'p-3', 'p-4', 'p-5', 'm-1', 'm-2', 'm-3', 'm-4', 'm-5',
-    'px-1', 'px-2', 'px-3', 'px-4', 'px-5', 'py-1', 'py-2', 'py-3', 'py-4', 'py-5',
-    'mx-1', 'mx-2', 'mx-3', 'mx-4', 'mx-5', 'my-1', 'my-2', 'my-3', 'my-4', 'my-5',
+    'flex-row', 'flex-col', 'relative', 'absolute', 'static', 'fixed', 'sticky',
+    
+    // Spacing (more comprehensive)
+    ...Array.from({length: 24}, (_, i) => `p-${i}`),
+    ...Array.from({length: 24}, (_, i) => `m-${i}`),
+    ...Array.from({length: 24}, (_, i) => `px-${i}`),
+    ...Array.from({length: 24}, (_, i) => `py-${i}`),
+    ...Array.from({length: 24}, (_, i) => `mx-${i}`),
+    ...Array.from({length: 24}, (_, i) => `my-${i}`),
+    ...Array.from({length: 24}, (_, i) => `pt-${i}`),
+    ...Array.from({length: 24}, (_, i) => `pr-${i}`),
+    ...Array.from({length: 24}, (_, i) => `pb-${i}`),
+    ...Array.from({length: 24}, (_, i) => `pl-${i}`),
+    ...Array.from({length: 24}, (_, i) => `mt-${i}`),
+    ...Array.from({length: 24}, (_, i) => `mr-${i}`),
+    ...Array.from({length: 24}, (_, i) => `mb-${i}`),
+    ...Array.from({length: 24}, (_, i) => `ml-${i}`),
+    
     // Typography
-    'text-xs', 'text-sm', 'text-base', 'text-lg', 'text-xl', 'text-2xl',
-    'font-thin', 'font-light', 'font-normal', 'font-medium', 'font-bold',
-    // Colors
-    'text-black', 'text-white', 'text-gray-100', 'text-gray-200', 'text-gray-300',
-    'bg-white', 'bg-black', 'bg-gray-100', 'bg-gray-200', 'bg-gray-300',
+    'text-xs', 'text-sm', 'text-base', 'text-lg', 'text-xl', 'text-2xl', 'text-3xl',
+    'font-thin', 'font-light', 'font-normal', 'font-medium', 'font-bold', 'font-extrabold',
+    'text-left', 'text-center', 'text-right', 'text-justify',
+    
+    // Common text colors
+    'text-white', 'text-black', 'text-gray-50', 'text-gray-100', 'text-gray-200',
+    'text-gray-300', 'text-gray-400', 'text-gray-500', 'text-gray-600', 'text-gray-700',
+    'text-gray-800', 'text-gray-900',
+    
+    // Common background colors
+    'bg-white', 'bg-black', 'bg-gray-50', 'bg-gray-100', 'bg-gray-200',
+    'bg-gray-300', 'bg-gray-400', 'bg-gray-500', 'bg-gray-600', 'bg-gray-700',
+    'bg-gray-800', 'bg-gray-900',
+    
     // Flexbox
-    'justify-start', 'justify-end', 'justify-center', 'items-start', 'items-center',
-    // Add more as needed
+    'justify-start', 'justify-end', 'justify-center', 'justify-between', 'justify-around', 'justify-evenly',
+    'items-start', 'items-center', 'items-end', 'items-baseline', 'items-stretch',
+    
+    // Sizing
+    'w-full', 'h-full', 'w-screen', 'h-screen', 'max-w-full', 'max-h-full',
+    ...Array.from({length: 12}, (_, i) => `w-${i}`),
+    ...Array.from({length: 12}, (_, i) => `h-${i}`),
+    
+    // Common utilities
+    'rounded', 'rounded-sm', 'rounded-md', 'rounded-lg', 'rounded-xl', 'rounded-full',
   ];
   
   console.log('📝 Pre-generating obfuscated names for common Tailwind classes');
@@ -236,4 +267,111 @@ export function ensureCommonTailwindClasses() {
     getObfuscatedClassName(className);
   });
   console.log(`✅ Pre-generated ${commonClasses.length} class mappings`);
+}
+
+// Add this new function to directly process CSS files
+export function processCssFiles(directory) {
+  console.log("🔄 Processing CSS files to match HTML obfuscation...");
+  
+  const processCssFile = (filePath) => {
+    try {
+      let content = fs.readFileSync(filePath, "utf-8");
+      const originalContent = content;
+      let replacementCount = 0;
+      
+      // Get all keys from the class map to process
+      const classNames = Object.keys(classMap);
+      
+      // Sort by length (longest first) to prevent partial replacements
+      classNames.sort((a, b) => b.length - a.length);
+      
+      // Replace each class selector in the CSS
+      for (const className of classNames) {
+        // Skip empty class names
+        if (!className.trim()) continue;
+        
+        const obfuscatedName = classMap[className];
+        if (!obfuscatedName) continue;
+        
+        // Handle various CSS selector patterns
+        // 1. Standard class selector: .class { ... }
+        const pattern1 = new RegExp(`\\.${className}([\\s{,:>+~\\[])`, "g");
+        content = content.replace(pattern1, (match, suffix) => {
+          replacementCount++;
+          return `.${obfuscatedName}${suffix}`;
+        });
+        
+        // 2. End of selector: .class, or just .class
+        const pattern2 = new RegExp(`\\.${className}$`, "gm");
+        content = content.replace(pattern2, (match) => {
+          replacementCount++;
+          return `.${obfuscatedName}`;
+        });
+        
+        // 3. Tailwind variants: .hover\:class, .md\:class, etc.
+        const pattern3 = new RegExp(`\\.(\\w+)\\\\:${className}([\\s{,:>+~\\[])`, "g");
+        content = content.replace(pattern3, (match, variant, suffix) => {
+          replacementCount++;
+          return `.${variant}\\:${obfuscatedName}${suffix}`;
+        });
+      }
+      
+      if (content !== originalContent) {
+        fs.writeFileSync(filePath, content);
+        console.log(`✅ Updated CSS file: ${path.basename(filePath)} (replaced ${replacementCount} selectors)`);
+      } else {
+        console.warn(`⚠️ No changes made to CSS file: ${path.basename(filePath)}`);
+      }
+    } catch (error) {
+      console.error(`❌ Error processing CSS file ${filePath}:`, error);
+      console.error(error.stack);
+    }
+  };
+  
+  const findCssFiles = (dir) => {
+    try {
+      const entries = fs.readdirSync(dir, { withFileTypes: true });
+      
+      for (const entry of entries) {
+        const fullPath = path.join(dir, entry.name);
+        
+        if (entry.isDirectory()) {
+          findCssFiles(fullPath);
+        } else if (entry.name.endsWith(".css")) {
+          console.log(`🔍 Found CSS file: ${path.basename(fullPath)}`);
+          processCssFile(fullPath);
+        }
+      }
+    } catch (error) {
+      console.error(`❌ Error finding CSS files in ${dir}:`, error);
+    }
+  };
+  
+  findCssFiles(directory);
+}
+
+// Also add this helper function for better debugging
+export function findAllHtmlFiles(directory) {
+  const htmlFiles = [];
+  
+  const findFiles = (dir) => {
+    try {
+      const entries = fs.readdirSync(dir, { withFileTypes: true });
+      
+      for (const entry of entries) {
+        const fullPath = path.join(dir, entry.name);
+        
+        if (entry.isDirectory()) {
+          findFiles(fullPath);
+        } else if (entry.name.endsWith(".html")) {
+          htmlFiles.push(fullPath);
+        }
+      }
+    } catch (error) {
+      console.error(`❌ Error finding HTML files in ${dir}:`, error);
+    }
+  };
+  
+  findFiles(directory);
+  return htmlFiles;
 } 
