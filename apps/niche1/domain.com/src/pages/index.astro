@@ -3,6 +3,34 @@ import BaseLayout from "@monorepo/shared/themes/starter/layouts/BaseLayout.astro
 ---
 
 <BaseLayout title="Startseite">
-  <h1 class="font-bold text-4xl border-2 bg-red-500">Willkommen auf unserer Startseite</h1>
-  <p>Willkommen auf unserer Startseite</p>
+  <div class="relative min-h-[80vh] overflow-hidden bg-gray-900">
+    <div class="relative mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
+      <div class="text-center">
+        <h1
+          class="text-4xl font-extrabold tracking-tight text-white sm:text-5xl md:text-6xl"
+        >
+          <span class="block">Welcome to Our</span>
+          <span class="block text-indigo-400">Amazing Platform Here</span>
+        </h1>
+        <p class="mx-auto mt-6 max-w-lg text-xl text-gray-300">
+          Discover the power of our platform and take your business to the next
+          level with our innovative solutions.
+        </p>
+        <div class="mt-10 flex justify-center gap-4">
+          <a
+            href="#"
+            class="rounded-md bg-indigo-600 px-8 py-3 text-base font-medium text-white hover:bg-indigo-700"
+          >
+            Get Started
+          </a>
+          <a
+            href="#"
+            class="rounded-md bg-gray-800 px-8 py-3 text-base font-medium text-gray-300 hover:bg-gray-700"
+          >
+            Learn More
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
 </BaseLayout>
