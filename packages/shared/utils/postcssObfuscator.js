@@ -1,6 +1,6 @@
 import { getObfuscatedClassName } from './obfuscationManager.js';
 
-export default (opts = {}) => {
+const postcssObfuscator = (opts = {}) => {
   return {
     postcssPlugin: 'postcss-tailwind-obfuscator',
     
@@ -18,4 +18,6 @@ export default (opts = {}) => {
   };
 };
 
-postcssObfuscator.postcss = true; 
+postcssObfuscator.postcss = true;
+
+export default postcssObfuscator; 
