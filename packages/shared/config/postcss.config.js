@@ -8,6 +8,6 @@ module.exports = {
   plugins: [
     tailwindcss,
     autoprefixer,
-    NODE_ENV === "production" ? postcssObfuscator() : null,
+    NODE_ENV === "production" ? postcssObfuscator({ debug: true }) : null,
   ].filter(Boolean),
 };
