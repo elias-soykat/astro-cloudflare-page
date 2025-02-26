@@ -6,6 +6,8 @@ import {
   loadClassMap,
   processHtmlFiles,
   preprocessSourceFiles,
+  getClassMap,
+  ensureCommonTailwindClasses,
 } from "./obfuscationManager.js";
 
 /**
@@ -24,6 +26,9 @@ export function obfuscationIntegration() {
 
         // Create a global class mapping function for PostCSS to use
         global.getObfuscatedClassName = getObfuscatedClassName;
+
+        // Pre-generate common class names to ensure consistency
+        ensureCommonTailwindClasses();
 
         if (command === "build") {
           console.log(
@@ -61,6 +66,62 @@ export function obfuscationIntegration() {
         }
 
         console.log(`📁 Output directory: ${outputDir}`);
+
+        // Check for CSS files that might need obfuscation
+        try {
+          const findAllCssFiles = (directory) => {
+            let cssFiles = [];
+            const entries = fs.readdirSync(directory, { withFileTypes: true });
+
+            for (const entry of entries) {
+              const fullPath = path.join(directory, entry.name);
+
+              if (entry.isDirectory()) {
+                cssFiles = cssFiles.concat(findAllCssFiles(fullPath));
+              } else if (entry.name.endsWith(".css")) {
+                cssFiles.push(fullPath);
+              }
+            }
+
+            return cssFiles;
+          };
+
+          const cssFiles = findAllCssFiles(outputDir);
+          console.log(
+            `🔍 Found ${cssFiles.length} CSS files in the output directory`,
+          );
+
+          // If any CSS files weren't processed by PostCSS, handle them here
+          // This is a fallback in case the PostCSS plugin didn't run
+          if (cssFiles.length > 0 && Object.keys(getClassMap()).length === 0) {
+            console.log(
+              `⚠️ No class mapping found but CSS files exist. Creating mapping now...`,
+            );
+
+            // Create class mappings first from HTML files
+            const htmlFiles = findAllHtmlFiles(outputDir);
+            for (const htmlFile of htmlFiles) {
+              const content = fs.readFileSync(htmlFile, "utf-8");
+              const classRegex = /class=["']([^"']*)["']/g;
+
+              let match;
+              while ((match = classRegex.exec(content)) !== null) {
+                const classNames = match[1].split(/\s+/);
+                classNames.forEach((className) => {
+                  if (className.trim()) {
+                    getObfuscatedClassName(className.trim());
+                  }
+                });
+              }
+            }
+
+            console.log(
+              `📊 Created mappings for HTML classes. Map size: ${Object.keys(getClassMap()).length}`,
+            );
+          }
+        } catch (error) {
+          console.error(`❌ Error checking CSS files: ${error.message}`);
+        }
 
         // Process all HTML files in the build output
         processHtmlFiles(outputDir);

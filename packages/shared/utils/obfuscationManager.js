@@ -63,14 +63,31 @@ export function processHtmlFiles(directory) {
     try {
       let content = fs.readFileSync(filePath, 'utf-8');
       let modified = false;
+      let replacedCount = 0;
       
-      // Replace class attributes
-      const classRegex = /class="([^"]*)"/g;
+      // Replace class attributes with more robust handling
+      const classRegex = /class=["']([^"']*)["']/g;
       content = content.replace(classRegex, (match, classNames) => {
-        const classes = classNames.split(' ');
-        const obfuscatedClasses = classes.map(className => 
-          className.trim() ? (classMap[className.trim()] || className) : ''
-        ).filter(Boolean);
+        const classes = classNames.split(/\s+/);
+        const obfuscatedClasses = classes.map(className => {
+          if (!className.trim()) return '';
+          
+          // Check if we have an obfuscated version
+          const obfuscated = classMap[className.trim()];
+          if (obfuscated) {
+            replacedCount++;
+            return obfuscated;
+          }
+          
+          // If not found in map, generate it now
+          if (className.trim()) {
+            const newObfuscated = getObfuscatedClassName(className.trim());
+            replacedCount++;
+            return newObfuscated;
+          }
+          
+          return className;
+        }).filter(Boolean);
         
         modified = true;
         return `class="${obfuscatedClasses.join(' ')}"`;
@@ -78,13 +95,14 @@ export function processHtmlFiles(directory) {
       
       if (modified) {
         fs.writeFileSync(filePath, content);
-        console.log(`✅ Updated HTML file: ${path.basename(filePath)}`);
+        console.log(`✅ Updated HTML file: ${path.basename(filePath)} (replaced ${replacedCount} classes)`);
       }
     } catch (error) {
       console.error(`❌ Error processing HTML file ${filePath}:`, error);
     }
   };
   
+  // Similar to existing code, but with more logging
   const processDir = (dir) => {
     try {
       const entries = fs.readdirSync(dir, { withFileTypes: true });
@@ -103,6 +121,26 @@ export function processHtmlFiles(directory) {
     }
   };
   
+  // Check for temporary mapping file first
+  try {
+    const tempMapPath = path.join(process.cwd(), 'temp-obfuscation-map.json');
+    if (fs.existsSync(tempMapPath)) {
+      console.log(`📋 Loading temporary class mapping from PostCSS processing`);
+      const content = fs.readFileSync(tempMapPath, 'utf-8');
+      const tempMap = JSON.parse(content);
+      
+      // Merge with existing map
+      Object.assign(classMap, tempMap);
+      console.log(`📊 Combined mapping now has ${Object.keys(classMap).length} classes`);
+      
+      // Clean up temp file
+      fs.unlinkSync(tempMapPath);
+    }
+  } catch (error) {
+    console.warn(`⚠️ Could not load temporary mapping: ${error.message}`);
+  }
+  
+  console.log(`🔍 Starting HTML processing with ${Object.keys(classMap).length} mapped classes`);
   processDir(directory);
 }
 
@@ -170,4 +208,32 @@ export function preprocessSourceFiles(directory) {
   const classes = collectClasses(directory);
   console.log(`📊 Pre-collected ${classes.size} unique Tailwind classes`);
   return classes;
+}
+
+// Force a specific mapping for common Tailwind classes
+export function ensureCommonTailwindClasses() {
+  // List of common Tailwind classes that might be used
+  const commonClasses = [
+    // Layout
+    'container', 'flex', 'grid', 'block', 'inline', 'inline-block', 'hidden',
+    // Spacing
+    'p-1', 'p-2', 'p-3', 'p-4', 'p-5', 'm-1', 'm-2', 'm-3', 'm-4', 'm-5',
+    'px-1', 'px-2', 'px-3', 'px-4', 'px-5', 'py-1', 'py-2', 'py-3', 'py-4', 'py-5',
+    'mx-1', 'mx-2', 'mx-3', 'mx-4', 'mx-5', 'my-1', 'my-2', 'my-3', 'my-4', 'my-5',
+    // Typography
+    'text-xs', 'text-sm', 'text-base', 'text-lg', 'text-xl', 'text-2xl',
+    'font-thin', 'font-light', 'font-normal', 'font-medium', 'font-bold',
+    // Colors
+    'text-black', 'text-white', 'text-gray-100', 'text-gray-200', 'text-gray-300',
+    'bg-white', 'bg-black', 'bg-gray-100', 'bg-gray-200', 'bg-gray-300',
+    // Flexbox
+    'justify-start', 'justify-end', 'justify-center', 'items-start', 'items-center',
+    // Add more as needed
+  ];
+  
+  console.log('📝 Pre-generating obfuscated names for common Tailwind classes');
+  commonClasses.forEach(className => {
+    getObfuscatedClassName(className);
+  });
+  console.log(`✅ Pre-generated ${commonClasses.length} class mappings`);
 } 
