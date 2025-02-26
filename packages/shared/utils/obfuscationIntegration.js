@@ -30,8 +30,19 @@ export function obfuscationIntegration() {
             "🔍 Pre-processing source files to collect Tailwind classes...",
           );
 
+          // Convert config.root to string if it's a URL
+          let rootDir = config.root;
+          if (typeof rootDir === "object" && rootDir instanceof URL) {
+            rootDir = rootDir.pathname;
+            // On Windows, remove the leading slash from the pathname
+            if (process.platform === "win32" && rootDir.startsWith("/")) {
+              rootDir = rootDir.substring(1);
+            }
+          }
+
           // This ensures all Tailwind classes are collected before PostCSS runs
-          const srcDir = path.resolve(config.root, "src");
+          const srcDir = path.resolve(rootDir, "src");
+          console.log(`📂 Source directory: ${srcDir}`);
           preprocessSourceFiles(srcDir);
         }
       },
